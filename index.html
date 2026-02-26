@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Sistema de Pontuação</title>
+
+<style>
+body { 
+  font-family: Arial, sans-serif; 
+  background: #1e1e2f; 
+  color: #f0f0f0; 
+  padding: 0; 
+  margin:0;
+}
+
+/* ===== HEADER ===== */
+.topbar{
+  position: fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:70px;
+  background: rgba(20,20,40,0.85);
+  backdrop-filter: blur(8px);
+  display:flex;
+  align-items:center;
+  padding: 0 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.logo-area{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo-area img{
+  height:48px;
+  width:auto;
+}
+
+.logo-text{
+  font-size: 20px;
+  font-weight: bold;
+  color:#fff;
+}
+
+.logo-sub{
+  font-size: 12px;
+  color:#aaa;
+}
+
+/* ===== CONTAINER ===== */
+.container { 
+  max-width: 1000px; 
+  margin: auto; 
+  padding: 90px 10px 10px 10px;
+}
+
+h1 { text-align: center; color: #fff; }
+
+.card { 
+  background: #2a2a3f; 
+  padding: 15px; 
+  margin: 15px 0; 
+  border-radius: 12px; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+}
+
+input, select, button { 
+  padding: 10px; 
+  margin: 6px 0; 
+  border-radius: 6px; 
+  border: none; 
+  font-size: 1em; 
+}
+
+input, select { 
+  background: #3a3a50; 
+  color: #fff; 
+  width: 48%; 
+}
+
+button { 
+  cursor: pointer; 
+  background: linear-gradient(135deg,#4e5bf2,#6b76ff); 
+  color: #fff; 
+  font-weight: bold; 
+  transition: 0.3s;
+}
+
+button:hover { 
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.remover-btn { 
+  background: linear-gradient(135deg,#f25c5c,#ff7b7b); 
+  margin-left: 10px; 
+}
+
+.ranking-item, .campanha-item, .colaborador-item { 
+  padding: 10px; 
+  border-bottom: 1px solid #444; 
+  border-left: 6px solid transparent; 
+}
+
+.verde { background: #2d4d2d; border-left-color: #00ff00; }
+.amarelo { background: #4f4a2d; border-left-color: #ffcc00; }
+.vermelho { background: #4d2d2d; border-left-color: #ff4444; }
+
+.hist-item { 
+  font-size: 14px; 
+  border-bottom: 1px dashed #555; 
+  padding: 6px 0; 
+  white-space: pre-line; 
+  color: #dcdcdc; 
+}
+
+canvas { 
+  margin-top: 10px; 
+  border-radius: 8px; 
+  width: 100% !important; 
+  height: auto !important; 
+}
+
+@media (max-width: 600px) {
+  input, select { width: 100%; margin-bottom: 8px; }
+  button { width: 100%; margin-bottom: 8px; }
+  .logo-text{ font-size:16px; }
+  .logo-sub{ font-size:10px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="topbar">
+  <div class="logo-area">
+    <img src="./logo.jpg.jpg" alt="Winner Promotoria e Vendas">
+    <div>
+      <div class="logo-text">Winner Promotoria e Vendas</div>
+      <div class="logo-sub">A gente sabe o que faz</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+<h1>🎯 Sistema de Pontuação</h1>
+
+<button onclick="salvarManual()">💾 Salvar Alterações</button>
+<button onclick="limparDados()">🗑 Limpar Tudo</button>
+
+<div class="card">
+<h3>👥 Adicionar Colaborador</h3>
+<input type="text" id="nomeColaborador" placeholder="Nome">
+<button onclick="adicionarColaborador()">➕ Adicionar</button>
+<div id="listaColaboradores"></div>
+</div>
+
+<div class="card">
+<h3>🏷️ Criar Campanha</h3>
+<input type="text" id="nomeCampanha" placeholder="Nome da campanha">
+<input type="number" id="valorCampanha" placeholder="Pontos">
+<button onclick="criarCampanha()">➕ Criar</button>
+<div id="listaCampanhas"></div>
+</div>
+
+<div class="card">
+<h3>💰 Aplicar ou Remover Pontos</h3>
+<select id="selectColaborador"></select>
+<select id="selectCampanha"></select>
+<button onclick="aplicarCampanha()">➕ Adicionar Pontos</button>
+<button onclick="removerPontos()">➖ Remover Pontos</button>
+</div>
+
+<div class="card">
+<h3>🏆 Ranking de Colaboradores</h3>
+<div id="ranking"></div>
+</div>
+
+<div class="card">
+<h3>📊 Dashboard de Colaboradores</h3>
+<canvas id="chartColaboradores"></canvas>
+</div>
+
+<div class="card">
+<h3>📊 Dashboard de Campanhas</h3>
+<canvas id="chartCampanhas"></canvas>
+</div>
+
+<div class="card">
+<h3>📜 Histórico</h3>
+<div id="historico"></div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let colaboradores = [];
+let campanhas = [];
+let historico = [];
+let pontosPorCampanha = [];
+let lastColaboradorIndex = 0;
+let lastCampanhaIndex = 0;
+let chartColaboradores;
+let chartCampanhas;
+
+function salvarManual(){
+    localStorage.setItem("colaboradores",JSON.stringify(colaboradores));
+    localStorage.setItem("campanhas",JSON.stringify(campanhas));
+    localStorage.setItem("historico",JSON.stringify(historico));
+    localStorage.setItem("pontosPorCampanha",JSON.stringify(pontosPorCampanha));
+    alert("💾 Alterações salvas!");
+}
+
+function limparDados(){
+    if(confirm("🗑 Deseja apagar todos os dados?")){
+        localStorage.clear();
+        colaboradores=[];
+        campanhas=[];
+        historico=[];
+        pontosPorCampanha=[];
+        atualizarTela();
+    }
+}
+
+function getDataHora(){
+    const now = new Date();
+    return now.toLocaleDateString() + " ⏰ " + now.toLocaleTimeString();
+}
+
+function adicionarColaborador(){
+    const nome = document.getElementById("nomeColaborador").value;
+    if(!nome) return;
+    colaboradores.push({nome:nome, pontos:0});
+    document.getElementById("nomeColaborador").value="";
+    historico.unshift(`👤 Colaborador Adicionado:\nNome: ${nome}\nData: ${getDataHora()}`);
+    atualizarTela(true);
+}
+
+function criarCampanha(){
+    const nome = document.getElementById("nomeCampanha").value;
+    const valor = parseInt(document.getElementById("valorCampanha").value);
+    if(!nome || isNaN(valor)) return;
+    campanhas.push({nome:nome, valor:valor});
+    pontosPorCampanha.push(0);
+    document.getElementById("nomeCampanha").value="";
+    document.getElementById("valorCampanha").value="";
+    historico.unshift(`🏷️ Campanha Criada:\nNome: ${nome}\nPontos: ${valor}\nData: ${getDataHora()}`);
+    atualizarTela(true);
+}
+
+function aplicarCampanha(){
+    const colIndex = document.getElementById("selectColaborador").value;
+    const campIndex = document.getElementById("selectCampanha").value;
+    if(colIndex === "" || campIndex === "") return;
+    colaboradores[colIndex].pontos += campanhas[campIndex].valor;
+    pontosPorCampanha[campIndex] += campanhas[campIndex].valor;
+    historico.unshift(`💰 Pontos Aplicados:\nColaborador: ${colaboradores[colIndex].nome}\nCampanha: ${campanhas[campIndex].nome}\nPontos: +${campanhas[campIndex].valor}\nData: ${getDataHora()}`);
+    atualizarTela(true);
+}
+
+function removerPontos(){
+    const colIndex = document.getElementById("selectColaborador").value;
+    const campIndex = document.getElementById("selectCampanha").value;
+    if(colIndex === "" || campIndex === "") return;
+    colaboradores[colIndex].pontos -= campanhas[campIndex].valor;
+    if(colaboradores[colIndex].pontos < 0) colaboradores[colIndex].pontos = 0;
+    pontosPorCampanha[campIndex] -= campanhas[campIndex].valor;
+    if(pontosPorCampanha[campIndex] < 0) pontosPorCampanha[campIndex] = 0;
+    historico.unshift(`💸 Pontos Removidos:\nColaborador: ${colaboradores[colIndex].nome}\nCampanha: ${campanhas[campIndex].nome}\nPontos: -${campanhas[campIndex].valor}\nData: ${getDataHora()}`);
+    atualizarTela(true);
+}
+
+function atualizarTela(atualizarListas=true){
+    const selectCol = document.getElementById("selectColaborador");
+    selectCol.innerHTML = "";
+    colaboradores.forEach((c,i)=>{ selectCol.innerHTML += `<option value="${i}">${c.nome}</option>`; });
+    
+    const selectCamp = document.getElementById("selectCampanha");
+    selectCamp.innerHTML = "";
+    campanhas.forEach((c,i)=>{ selectCamp.innerHTML += `<option value="${i}">${c.nome} (+${c.valor})</option>`; });
+
+    if(atualizarListas){
+        const listaCol = document.getElementById("listaColaboradores");
+        listaCol.innerHTML = "";
+        colaboradores.forEach((c,i)=>{ listaCol.innerHTML += `<div class="colaborador-item">👤 ${c.nome} <button class="remover-btn" onclick="removerColaborador(${i})">❌</button></div>`; });
+
+        const listaCamp = document.getElementById("listaCampanhas");
+        listaCamp.innerHTML = "";
+        campanhas.forEach((c,i)=>{ listaCamp.innerHTML += `<div class="campanha-item">🏷️ ${c.nome} (+${c.valor}) <button class="remover-btn" onclick="removerCampanha(${i})">❌</button></div>`; });
+    }
+
+    const rankingDiv = document.getElementById("ranking");
+    rankingDiv.innerHTML = "";
+    let ranking = [...colaboradores].sort((a,b)=>b.pontos-a.pontos);
+    const maior = ranking[0]?.pontos || 0;
+    const menor = ranking[ranking.length-1]?.pontos || 0;
+    const meio = (maior+menor)/2;
+    ranking.forEach(c=>{
+        const cor = c.pontos === maior ? 'verde' : (c.pontos <= meio ? 'vermelho' : 'amarelo');
+        rankingDiv.innerHTML += `<div class="ranking-item ${cor}">🏆 ${c.nome} : <strong>${c.pontos} pontos</strong></div>`;
+    });
+}
+
+function removerColaborador(index){
+    if(confirm("Remover colaborador?")){
+        colaboradores.splice(index,1);
+        atualizarTela();
+    }
+}
+
+function removerCampanha(index){
+    if(confirm("Remover campanha?")){
+        campanhas.splice(index,1);
+        pontosPorCampanha.splice(index,1);
+        atualizarTela();
+    }
+}
+
+atualizarTela();
+</script>
+
+</body>
+</html>
