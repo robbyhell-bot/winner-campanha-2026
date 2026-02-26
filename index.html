@@ -39,6 +39,9 @@ canvas{width:100%!important}
       <div class="logo-sub">A gente sabe o que faz</div>
     </div>
   </div>
+
+  <!-- BOTÃO SALVAR -->
+  <button id="btnSalvar" style="margin-left:auto;">💾 Salvar</button>
 </div>
 
 <div class="container">
@@ -261,6 +264,42 @@ historico.slice(0,30).forEach(h=>{
 
 }
 
+/* =========================
+   SISTEMA DE SALVAMENTO
+========================= */
+
+function salvarDados(){
+ const dados = {
+   colaboradores,
+   campanhas,
+   historico,
+   pontosPorCampanha
+ };
+ localStorage.setItem("sistemaPontuacao", JSON.stringify(dados));
+}
+
+function carregarDados(){
+ const dados = localStorage.getItem("sistemaPontuacao");
+ if(dados){
+   const obj = JSON.parse(dados);
+   colaboradores = obj.colaboradores || [];
+   campanhas = obj.campanhas || [];
+   historico = obj.historico || [];
+   pontosPorCampanha = obj.pontosPorCampanha || [];
+ }
+}
+
+/* botão salvar */
+document.getElementById("btnSalvar").addEventListener("click", ()=>{
+ salvarDados();
+ alert("Dados salvos com sucesso!");
+});
+
+/* salvar automaticamente ao fechar a aba */
+window.addEventListener("beforeunload", salvarDados);
+
+/* carregar ao abrir */
+carregarDados();
 atualizarTela();
 </script>
 
